@@ -349,10 +349,11 @@
       overflow: hidden;
       display: flex;
       flex-direction: column;
-      transition: box-shadow 0.2s;
+      transition: transform 0.2s, box-shadow 0.2s;
       cursor: pointer;
     }
     .workout-card:hover {
+      transform: translateY(-4px);
       box-shadow: 0 16px 35px rgba(0, 0, 0, 0.55);
     }
     .workout-card.locked { opacity: 0.96; }
@@ -374,7 +375,9 @@
       object-fit: cover;
       display: block;
       background: transparent;
+      transition: transform 0.5s ease;
     }
+    .workout-card:hover .card-video { transform: scale(1.06); }
     .card-media::after {
       content: "";
       position: absolute;
@@ -418,9 +421,10 @@
       align-items: center;
       justify-content: center;
       box-shadow: 0 0 24px rgba(255, 87, 87, 0.55);
-      transition: opacity 0.25s ease;
+      transition: transform 0.25s ease, opacity 0.25s ease;
     }
     .play-icon svg { width: 20px; height: 20px; fill: #fff; margin-left: 3px; }
+    .workout-card:hover .play-icon { transform: scale(1.12); opacity: 0.35; }
 
     .video-indicator {
       position: absolute;
@@ -635,52 +639,45 @@
 
   <script>
     /* ================================================================
-       ✅ VIDEOS ARE ALREADY SET UP AND WORKING
-       ----------------------------------------------------------------
-       All 6 workouts have working video URLs below. Just open this
-       file in a browser and the videos will play.
-
-       TO SWAP FOR YOUR OWN VIDEOS later:
-       Replace the "video" value in the matching block below with
-       your own .mp4 URL (e.g. "videos/my-workout.mp4" or a full URL).
+       ✅ VIDEOS ARE READY
        ================================================================ */
 
- const VIDEO_CONFIG = [
-  { // Workout 0 — Fast Burn HIIT Circuit
-    video:    "https://github.com/mooph223-ux/fastfit/blob/main/15079798_1080_1920_30fps.mp4",
-    fallback: "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
-    poster:   "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=900&q=80&auto=format&fit=crop"
-  },
-  { // Workout 1 — Blue Steel Upper Hypertrophy
-    video:    "videos/upper-hypertrophy.mp4",
-    fallback: "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
-    poster:   "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=900&q=80&auto=format&fit=crop"
-  },
-  { // Workout 2 — Nitro Leg Power & Explosiveness
-    video:    "videos/leg-power.mp4",
-    fallback: "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
-    poster:   "https://images.unsplash.com/photo-1434682881908-b43d0467b798?w=900&q=80&auto=format&fit=crop"
-  },
-  { // Workout 3 — Core Velocity & Six-Pack Shred
-    video:    "videos/core-velocity.mp4",
-    fallback: "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4",
-    poster:   "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=900&q=80&auto=format&fit=crop"
-  },
-  { // Workout 4 — Afterburn Metabolic Conditioning
-    video:    "videos/afterburn.mp4",
-    fallback: "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4",
-    poster:   "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=900&q=80&auto=format&fit=crop"
-  },
-  { // Workout 5 — Athletic Mobility & Core Stability
-    video:    "videos/mobility.mp4",
-    fallback: "https://storage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4",
-    poster:   "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=900&q=80&auto=format&fit=crop"
-  }
-];
+    const VIDEO_CONFIG = [
+      { // Workout 0 — Fast Burn HIIT Circuit
+        video:    "15079798_1080_1920_30fps.mp4", // <--- تم تصحيح اللينك هنا
+        fallback: "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+        poster:   "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=900&q=80&auto=format&fit=crop"
+      },
+      { // Workout 1 — Blue Steel Upper Hypertrophy
+        video:    "videos/upper-hypertrophy.mp4",
+        fallback: "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
+        poster:   "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=900&q=80&auto=format&fit=crop"
+      },
+      { // Workout 2 — Nitro Leg Power & Explosiveness
+        video:    "videos/leg-power.mp4",
+        fallback: "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
+        poster:   "https://images.unsplash.com/photo-1434682881908-b43d0467b798?w=900&q=80&auto=format&fit=crop"
+      },
+      { // Workout 3 — Core Velocity & Six-Pack Shred
+        video:    "videos/core-velocity.mp4",
+        fallback: "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4",
+        poster:   "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=900&q=80&auto=format&fit=crop"
+      },
+      { // Workout 4 — Afterburn Metabolic Conditioning
+        video:    "videos/afterburn.mp4",
+        fallback: "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4",
+        poster:   "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=900&q=80&auto=format&fit=crop"
+      },
+      { // Workout 5 — Athletic Mobility & Core Stability
+        video:    "videos/mobility.mp4",
+        fallback: "https://storage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4",
+        poster:   "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=900&q=80&auto=format&fit=crop"
+      }
+    ];
 
     /* ================================================================
        END OF VIDEO SETUP
-    ;   ================================================================ */
+       ================================================================ */
 
     let currentUser = null;
     let isPro = false;
@@ -790,9 +787,28 @@
         video.setAttribute("playsinline", "");
         video.setAttribute("webkit-playsinline", "");
 
+        // عشان الفيديو يشتغل تلقائياً في الخلفية
+        if (video.dataset.autoplay === "true") {
+          const p = video.play();
+          if (p && p.catch) p.catch(() => {});
+        }
+
         video.addEventListener("error", () => {
           console.warn("Video failed to load:", video.currentSrc || "(no src)");
         }, true);
+
+        // عشان الفيديو يشتغل لما تحط الماوس عليه
+        const card = video.closest(".workout-card");
+        if (card && !video.dataset.controls) {
+          card.addEventListener("mouseenter", () => {
+            const p = video.play();
+            if (p && p.catch) p.catch(() => {});
+          });
+          card.addEventListener("mouseleave", () => {
+            video.pause();
+            try { video.currentTime = 0; } catch (e) {}
+          });
+        }
       });
     }
 
@@ -891,7 +907,7 @@
       document.getElementById("main-content").innerHTML = `
         <div class="web-container">
           <div class="web-hero">
-            <video class="hero-video" muted playsinline preload="none"
+            <video class="hero-video" data-autoplay="true" autoplay muted loop playsinline preload="auto"
                    poster="${heroWorkout.image}">
               <source src="${heroWorkout.video}" type="video/mp4">
               <source src="${heroWorkout.videoFallback}" type="video/mp4">
@@ -942,7 +958,7 @@
       return `
         <div class="workout-card ${locked ? 'locked' : ''}" onclick="openWorkoutView(${w.id})">
           <div class="card-media" style="background-image:url('${w.image}');">
-            <video class="card-video" muted playsinline preload="none" poster="${w.image}">
+            <video class="card-video" muted loop playsinline preload="metadata" poster="${w.image}">
               <source src="${w.video}" type="video/mp4">
               <source src="${w.videoFallback}" type="video/mp4">
             </video>
@@ -1005,7 +1021,7 @@
           <button class="btn-outline" style="margin-bottom:24px;" onclick="switchPage('dashboard')">❮ Back to Dashboard</button>
 
           <div class="web-hero" style="margin-bottom:28px; padding:32px;">
-            <video class="hero-video" muted playsinline preload="none"
+            <video class="hero-video" data-autoplay="true" autoplay muted loop playsinline preload="auto"
                    poster="${w.image}">
               <source src="${w.video}" type="video/mp4">
               <source src="${w.videoFallback}" type="video/mp4">
