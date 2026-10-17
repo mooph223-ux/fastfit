@@ -639,12 +639,12 @@
 
   <script>
     /* ================================================================
-       ✅ VIDEOS ARE READY
+       ✅ VIDEOS ARE READY (FIXED FOR MOBILE AND DESKTOP)
        ================================================================ */
 
     const VIDEO_CONFIG = [
       { // Workout 0 — Fast Burn HIIT Circuit
-        video:    "15079798_1080_1920_30fps.mp4", // <--- تم تصحيح اللينك هنا
+        video:    "15079798_1080_1920_30fps.mp4", // <--- Fixed link
         fallback: "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
         poster:   "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=900&q=80&auto=format&fit=crop"
       },
@@ -780,35 +780,28 @@
 
     /* ==================== VIDEO HELPERS ==================== */
 
+    // This function forces the videos to play automatically on ALL devices (Mobile & Desktop)
     function attachVideoHandlers() {
       document.querySelectorAll("video").forEach(video => {
+        // Required attributes for mobile autoplay
         video.muted = true;
         video.playsInline = true;
         video.setAttribute("playsinline", "");
         video.setAttribute("webkit-playsinline", "");
+        video.setAttribute("muted", "");
 
-        // عشان الفيديو يشتغل تلقائياً في الخلفية
-        if (video.dataset.autoplay === "true") {
-          const p = video.play();
-          if (p && p.catch) p.catch(() => {});
+        // Force play
+        const playPromise = video.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(error => {
+            console.log("Autoplay prevented by browser:", error);
+          });
         }
 
+        // Log if video fails to load
         video.addEventListener("error", () => {
           console.warn("Video failed to load:", video.currentSrc || "(no src)");
         }, true);
-
-        // عشان الفيديو يشتغل لما تحط الماوس عليه
-        const card = video.closest(".workout-card");
-        if (card && !video.dataset.controls) {
-          card.addEventListener("mouseenter", () => {
-            const p = video.play();
-            if (p && p.catch) p.catch(() => {});
-          });
-          card.addEventListener("mouseleave", () => {
-            video.pause();
-            try { video.currentTime = 0; } catch (e) {}
-          });
-        }
       });
     }
 
@@ -907,7 +900,8 @@
       document.getElementById("main-content").innerHTML = `
         <div class="web-container">
           <div class="web-hero">
-            <video class="hero-video" data-autoplay="true" autoplay muted loop playsinline preload="auto"
+            <!-- Autoplay & Loop added -->
+            <video class="hero-video" autoplay muted loop playsinline preload="auto"
                    poster="${heroWorkout.image}">
               <source src="${heroWorkout.video}" type="video/mp4">
               <source src="${heroWorkout.videoFallback}" type="video/mp4">
@@ -958,7 +952,8 @@
       return `
         <div class="workout-card ${locked ? 'locked' : ''}" onclick="openWorkoutView(${w.id})">
           <div class="card-media" style="background-image:url('${w.image}');">
-            <video class="card-video" muted loop playsinline preload="metadata" poster="${w.image}">
+            <!-- Autoplay & Loop added -->
+            <video class="card-video" autoplay muted loop playsinline preload="auto" poster="${w.image}">
               <source src="${w.video}" type="video/mp4">
               <source src="${w.videoFallback}" type="video/mp4">
             </video>
@@ -1021,7 +1016,8 @@
           <button class="btn-outline" style="margin-bottom:24px;" onclick="switchPage('dashboard')">❮ Back to Dashboard</button>
 
           <div class="web-hero" style="margin-bottom:28px; padding:32px;">
-            <video class="hero-video" data-autoplay="true" autoplay muted loop playsinline preload="auto"
+            <!-- Autoplay & Loop added -->
+            <video class="hero-video" autoplay muted loop playsinline preload="auto"
                    poster="${w.image}">
               <source src="${w.video}" type="video/mp4">
               <source src="${w.videoFallback}" type="video/mp4">
@@ -1046,7 +1042,7 @@
               <svg viewBox="0 0 24 24" style="width:12px;height:12px;fill:var(--accent-bright);"><path d="M8 5v14l11-7z"/></svg>
               WORKOUT DEMO VIDEO
             </span>
-            <video controls playsinline preload="metadata" poster="${w.image}">
+            <video controls autoplay muted loop playsinline preload="metadata" poster="${w.image}">
               <source src="${w.video}" type="video/mp4">
               <source src="${w.videoFallback}" type="video/mp4">
               Your browser does not support the video tag.
