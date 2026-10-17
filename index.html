@@ -31,8 +31,11 @@
     .input-field { width: 100%; background: var(--bg-black); border: 1px solid rgba(255, 255, 255, 0.12); color: white; padding: 14px 16px; border-radius: 10px; margin-bottom: 14px; font-size: 14px; }
     .input-field:focus { outline: none; border-color: var(--accent-bright); }
     .btn-accent { width: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-bright)); color: #000; font-weight: 800; border: none; padding: 14px 20px; border-radius: 10px; font-size: 15px; cursor: pointer; transition: transform 0.15s; }
-    .btn-accent:hover { transform: translateY(-2px); }
+    .btn-accent:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-accent:hover:not(:disabled) { transform: translateY(-2px); }
     .divider { text-align: center; color: var(--text-muted); font-size: 12px; margin: 20px 0; letter-spacing: 1px; }
+    .social-btn { width: 100%; padding: 13px; border-radius: 10px; border: none; font-size: 14px; font-weight: 700; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 12px; transition: opacity 0.2s; background: #ffffff; color: #1a0a0b; }
+    .social-btn:hover { opacity: 0.92; }
     .web-container { max-width: 1280px; width: 100%; margin: 0 auto; padding: 36px 32px 64px; flex: 1; }
     .web-hero { position: relative; border-radius: 24px; padding: 44px; margin-bottom: 36px; display: flex; justify-content: space-between; align-items: center; gap: 24px; flex-wrap: wrap; overflow: hidden; border: 1px solid rgba(239, 68, 68, 0.35); background: #140708; isolation: isolate; min-height: 240px; }
     .hero-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; filter: brightness(0.55) saturate(1.1); pointer-events: none; }
@@ -137,35 +140,32 @@
     firebaseScript.type = 'module';
     firebaseScript.textContent = `
       import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-      import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+      import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
       import { getFirestore, doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
       const app = initializeApp(${JSON.stringify(firebaseConfig)});
       const auth = getAuth(app);
       const db = getFirestore(app);
 
-      // دالة تسجيل الدخول المعدلة
+      // تفعيل زرار الإيميل لما Firebase يخلص تحميل
+      const loginBtn = document.getElementById("login-btn");
+      if (loginBtn) {
+        loginBtn.disabled = false;
+        loginBtn.innerText = "Sign In / Create Account";
+      }
+
       window.handleFirebaseLogin = async function() {
         const email = document.getElementById("login-email").value.trim();
         const password = document.getElementById("login-password").value;
         const msgEl = document.getElementById("login-error-msg");
         
-        msgEl.innerText = ""; // مسح أي رسائل قديمة
+        msgEl.innerText = ""; 
 
-        if (!email) {
-          msgEl.innerText = "❌ Please enter your email.";
-          return;
-        }
-        if (!password) {
-          msgEl.innerText = "❌ Please enter a password.";
-          return;
-        }
-        if (password.length < 6) {
-          msgEl.innerText = "❌ Password must be at least 6 characters.";
-          return;
-        }
+        if (!email) { msgEl.innerText = "❌ Please enter your email."; return; }
+        if (!password) { msgEl.innerText = "❌ Please enter a password."; return; }
+        if (password.length < 6) { msgEl.innerText = "❌ Password must be at least 6 characters."; return; }
 
-        const btn = document.querySelector(".login-box .btn-accent");
+        const btn = document.getElementById("login-btn");
         btn.innerText = "Connecting...";
         btn.disabled = true;
 
@@ -176,7 +176,11 @@
             try { 
               await createUserWithEmailAndPassword(auth, email, password); 
             } catch (err) { 
-              msgEl.innerText = "❌ " + err.message; 
+              if (err.code === 'auth/email-already-in-use') {
+                msgEl.innerText = "❌ Incorrect password for this account.";
+              } else {
+                msgEl.innerText = "❌ " + err.message; 
+              }
             }
           } else {
             msgEl.innerText = "❌ " + error.message;
@@ -184,6 +188,15 @@
         } finally {
           btn.innerText = "Sign In / Create Account";
           btn.disabled = false;
+        }
+      };
+
+      window.handleGoogleLogin = async function() {
+        const provider = new GoogleAuthProvider();
+        try {
+          await signInWithPopup(auth, provider);
+        } catch (error) {
+          alert("Google Login Error: " + error.message);
         }
       };
 
@@ -321,11 +334,21 @@
           <div class="login-form-side">
             <div class="login-box">
               <h2 style="font-size:24px; margin-bottom:6px;">Sign In to FastFit</h2>
-              <p style="color:var(--text-muted); font-size:13px; margin-bottom:22px;">Enter any email & password (min 6 chars). If you don't have an account, it will be created automatically.</p>
+              <p style="color:var(--text-muted); font-size:13px; margin-bottom:22px;">Choose your preferred login method to access your dashboard</p>
+              
               <input type="email" id="login-email" class="input-field" placeholder="Email address" />
               <input type="password" id="login-password" class="input-field" placeholder="Password (min 6 chars)" />
               <div id="login-error-msg" style="font-size:13px; margin-bottom:14px; min-height:18px; color:var(--danger);"></div>
-              <button class="btn-accent" onclick="window.handleFirebaseLogin()">Sign In / Create Account</button>
+              
+              <!-- الزرار هنا بيبدأ معطل لحد ما Firebase يحمل -->
+              <button class="btn-accent" id="login-btn" disabled onclick="window.handleFirebaseLogin()">Loading...</button>
+              
+              <div class="divider">OR CONTINUE WITH</div>
+              
+              <button class="social-btn" onclick="window.handleGoogleLogin()">
+                <span style="font-weight:900; color:#ea4335; font-size:16px;">G</span>
+                <span>Continue with Google</span>
+              </button>
             </div>
           </div>
         </div>`;
