@@ -349,11 +349,10 @@
       overflow: hidden;
       display: flex;
       flex-direction: column;
-      transition: transform 0.2s, box-shadow 0.2s;
+      transition: box-shadow 0.2s;
       cursor: pointer;
     }
     .workout-card:hover {
-      transform: translateY(-4px);
       box-shadow: 0 16px 35px rgba(0, 0, 0, 0.55);
     }
     .workout-card.locked { opacity: 0.96; }
@@ -375,9 +374,7 @@
       object-fit: cover;
       display: block;
       background: transparent;
-      transition: transform 0.5s ease;
     }
-    .workout-card:hover .card-video { transform: scale(1.06); }
     .card-media::after {
       content: "";
       position: absolute;
@@ -421,10 +418,9 @@
       align-items: center;
       justify-content: center;
       box-shadow: 0 0 24px rgba(255, 87, 87, 0.55);
-      transition: transform 0.25s ease, opacity 0.25s ease;
+      transition: opacity 0.25s ease;
     }
     .play-icon svg { width: 20px; height: 20px; fill: #fff; margin-left: 3px; }
-    .workout-card:hover .play-icon { transform: scale(1.12); opacity: 0.35; }
 
     .video-indicator {
       position: absolute;
@@ -651,7 +647,7 @@
 
  const VIDEO_CONFIG = [
   { // Workout 0 — Fast Burn HIIT Circuit
-    video:    "15079798_1080_1920_30fps.mp4",
+    video:    "videos/hiit-circuit.mp4",
     fallback: "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
     poster:   "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=900&q=80&auto=format&fit=crop"
   },
@@ -794,26 +790,9 @@
         video.setAttribute("playsinline", "");
         video.setAttribute("webkit-playsinline", "");
 
-        if (video.dataset.autoplay === "true") {
-          const p = video.play();
-          if (p && p.catch) p.catch(() => {});
-        }
-
         video.addEventListener("error", () => {
           console.warn("Video failed to load:", video.currentSrc || "(no src)");
         }, true);
-
-        const card = video.closest(".workout-card");
-        if (card && !video.dataset.controls) {
-          card.addEventListener("mouseenter", () => {
-            const p = video.play();
-            if (p && p.catch) p.catch(() => {});
-          });
-          card.addEventListener("mouseleave", () => {
-            video.pause();
-            try { video.currentTime = 0; } catch (e) {}
-          });
-        }
       });
     }
 
@@ -912,7 +891,7 @@
       document.getElementById("main-content").innerHTML = `
         <div class="web-container">
           <div class="web-hero">
-            <video class="hero-video" data-autoplay="true" autoplay muted loop playsinline preload="auto"
+            <video class="hero-video" muted playsinline preload="none"
                    poster="${heroWorkout.image}">
               <source src="${heroWorkout.video}" type="video/mp4">
               <source src="${heroWorkout.videoFallback}" type="video/mp4">
@@ -963,7 +942,7 @@
       return `
         <div class="workout-card ${locked ? 'locked' : ''}" onclick="openWorkoutView(${w.id})">
           <div class="card-media" style="background-image:url('${w.image}');">
-            <video class="card-video" muted loop playsinline preload="metadata" poster="${w.image}">
+            <video class="card-video" muted playsinline preload="none" poster="${w.image}">
               <source src="${w.video}" type="video/mp4">
               <source src="${w.videoFallback}" type="video/mp4">
             </video>
@@ -1026,7 +1005,7 @@
           <button class="btn-outline" style="margin-bottom:24px;" onclick="switchPage('dashboard')">❮ Back to Dashboard</button>
 
           <div class="web-hero" style="margin-bottom:28px; padding:32px;">
-            <video class="hero-video" data-autoplay="true" autoplay muted loop playsinline preload="auto"
+            <video class="hero-video" muted playsinline preload="none"
                    poster="${w.image}">
               <source src="${w.video}" type="video/mp4">
               <source src="${w.videoFallback}" type="video/mp4">
