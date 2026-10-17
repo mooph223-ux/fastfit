@@ -5,12 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>FASTFIT — Official Training & Fitness Platform</title>
   <style>
-    :root {
-      color-scheme: dark;
-      --bg-black: #0a0505; --bg-deep: #140708; --surface-dark: #1c0a0b; --surface-card: #261012;
-      --accent: #dc2626; --accent-bright: #ff5757; --brand-red: #b91c1c;
-      --text-main: #fff1f2; --text-muted: #fecdd3; --danger: #ef4444; --success: #facc15;
-    }
+    :root { color-scheme: dark; --bg-black: #0a0505; --bg-deep: #140708; --surface-dark: #1c0a0b; --surface-card: #261012; --accent: #dc2626; --accent-bright: #ff5757; --brand-red: #b91c1c; --text-main: #fff1f2; --text-muted: #fecdd3; --danger: #ef4444; --success: #facc15; }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
     body { background-color: var(--bg-black); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; }
     .navbar { width: 100%; height: 76px; background: rgba(10, 5, 5, 0.88); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255, 255, 255, 0.08); position: sticky; top: 0; z-index: 40; display: none; }
@@ -115,7 +110,6 @@
 
   <main id="main-content"></main>
 
-  <!-- Subscription Modal -->
   <div class="modal-overlay" id="code-modal">
     <div class="modal-box">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
@@ -123,28 +117,16 @@
         <span style="cursor:pointer; font-size:20px;" onclick="closeCodeModal()">✕</span>
       </div>
       <p style="color:var(--text-muted); font-size:14px; margin-bottom:20px;">Enter your subscription activation code below to unlock all PRO training programs and strength tracks.</p>
-      <input type="text" id="modal-code-input" class="input-field" placeholder="Enter code (e.g. FAST2026, BLUEPRO)" style="text-transform:uppercase; font-weight:700; letter-spacing:1px;" />
+      <input type="text" id="modal-code-input" class="input-field" placeholder="Enter code (e.g. FAST2026)" style="text-transform:uppercase; font-weight:700; letter-spacing:1px;" />
       <div id="modal-code-msg" style="font-size:13px; margin-bottom:14px; min-height:18px;"></div>
-      
-      <!-- زرار التفعيل -->
       <button class="btn-accent" id="activate-btn" onclick="activateCode('modal-code-input', 'modal-code-msg')">Unlock Pro Membership</button>
-
-      <div style="margin-top:18px; padding-top:14px; border-top:1px solid rgba(255,255,255,0.08); font-size:12px; color:var(--text-muted);">
-        Available Working Codes:
-        <div style="margin-top:6px; display:flex; gap:8px; flex-wrap:wrap;">
-          <span class="pro-chip" style="cursor:pointer;" onclick="fillCode('FAST2026')">FAST2026</span>
-          <span class="pro-chip" style="cursor:pointer;" onclick="fillCode('BLUEPRO')">BLUEPRO</span>
-          <span class="pro-chip" style="cursor:pointer;" onclick="fillCode('NITRO99')">NITRO99</span>
-          <span class="pro-chip" style="cursor:pointer;" onclick="fillCode('COACHVIP')">COACHVIP</span>
-        </div>
-      </div>
     </div>
   </div>
 
   <script>
-    /* ================================================================
-       ✅ تم إضافة إعدادات Firebase الخاصة بك بنجاح
-       ================================================================ */
+    // ==========================================
+    // بيانات Firebase الخاصة بك
+    // ==========================================
     const firebaseConfig = {
       apiKey: "AIzaSyDTpUBumnDnojSXAHge870ExPdFb9Vt0AE",
       authDomain: "website-c6428.firebaseapp.com",
@@ -154,30 +136,66 @@
       appId: "1:505882104999:web:f9b5fecb24416e9d4d3782"
     };
 
-    // تحميل مكتبات Firebase ديناميكياً
+    // تحميل مكتبات Firebase وربط الدوال
     const firebaseScript = document.createElement('script');
     firebaseScript.type = 'module';
     firebaseScript.textContent = `
       import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-      import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+      import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+      import { getFirestore, doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
       const app = initializeApp(${JSON.stringify(firebaseConfig)});
+      const auth = getAuth(app);
       const db = getFirestore(app);
 
-      // دالة التفعيل الجديدة اللي بتكلم Firebase
+      window.handleFirebaseLogin = async function() {
+        const email = document.getElementById("login-email").value.trim();
+        const password = document.querySelectorAll(".input-field")[1].value;
+        if (!email || !password) return alert("Please enter email and password!");
+
+        try {
+          await signInWithEmailAndPassword(auth, email, password);
+        } catch (error) {
+          if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
+            try { await createUserWithEmailAndPassword(auth, email, password); } 
+            catch (err) { alert("Error creating account: " + err.message); }
+          } else {
+            alert("Login Error: " + error.message);
+          }
+        }
+      };
+
+      window.handleFirebaseLogout = async function() {
+        await signOut(auth);
+      };
+
+      onAuthStateChanged(auth, async (user) => {
+        if (user) {
+          const userRef = doc(db, "users", user.uid);
+          const userSnap = await getDoc(userRef);
+          let isUserPro = false;
+          let userPlan = "Free Tier";
+
+          if (userSnap.exists()) {
+            const data = userSnap.data();
+            isUserPro = data.isPro || false;
+            userPlan = data.plan || "Free Tier";
+          } else {
+            await setDoc(userRef, { email: user.email, isPro: false, plan: "Free Tier" });
+          }
+          window.onUserLoggedIn(user.email.split("@")[0], isUserPro, userPlan);
+        } else {
+          window.onUserLoggedOut();
+        }
+      });
+
       window.activateCode = async function(inputId, msgId) {
         const code = document.getElementById(inputId).value.trim().toUpperCase();
         const msgEl = document.getElementById(msgId);
         const btn = document.getElementById("activate-btn");
 
-        if (!code) {
-          msgEl.style.color = "var(--danger)";
-          msgEl.innerText = "❌ Please enter a code first.";
-          return;
-        }
-
-        btn.innerText = "Checking with database...";
-        btn.disabled = true;
+        if (!code) { msgEl.style.color = "var(--danger)"; msgEl.innerText = "❌ Please enter a code."; return; }
+        btn.innerText = "Checking..."; btn.disabled = true;
 
         try {
           const codeRef = doc(db, "activation_codes", code);
@@ -185,49 +203,35 @@
 
           if (codeSnap.exists()) {
             const data = codeSnap.data();
-            
             if (data.is_used === true) {
-              msgEl.style.color = "var(--danger)";
-              msgEl.innerText = "❌ This code has already been used.";
+              msgEl.style.color = "var(--danger)"; msgEl.innerText = "❌ This code has already been used.";
             } else {
-              // تحديث الكود في قاعدة البيانات إنه اتستخدم
-              await updateDoc(codeRef, {
-                is_used: true,
-                used_by: currentUser ? currentUser.name : "Unknown",
-                activated_at: new Date()
-              });
+              await updateDoc(codeRef, { is_used: true, used_by: auth.currentUser.email });
+              const userRef = doc(db, "users", auth.currentUser.uid);
+              await updateDoc(userRef, { isPro: true, plan: data.plan });
 
-              // تحديث الواجهة
-              isPro = true;
-              activePlanTitle = data.plan;
-              msgEl.style.color = "var(--success)";
-              msgEl.innerText = \`✅ Activated: \${activePlanTitle}!\`;
-              updateNavbarStatus();
-              
+              msgEl.style.color = "var(--success)"; msgEl.innerText = \`✅ Activated: \${data.plan}!\`;
               setTimeout(() => {
+                window.onUserLoggedIn(auth.currentUser.email.split("@")[0], true, data.plan);
                 closeCodeModal();
                 switchPage("dashboard");
               }, 1000);
             }
           } else {
-            msgEl.style.color = "var(--danger)";
-            msgEl.innerText = "❌ Invalid code. Please check and try again.";
+            msgEl.style.color = "var(--danger)"; msgEl.innerText = "❌ Invalid code.";
           }
         } catch (error) {
-          console.error("Firebase Error:", error);
-          msgEl.style.color = "var(--danger)";
-          msgEl.innerText = "❌ Connection error. Make sure you are online.";
+          msgEl.style.color = "var(--danger)"; msgEl.innerText = "❌ Error connecting to database.";
         } finally {
-          btn.innerText = "Unlock Pro Membership";
-          btn.disabled = false;
+          btn.innerText = "Unlock Pro Membership"; btn.disabled = false;
         }
       };
     `;
     document.body.appendChild(firebaseScript);
 
-    /* ================================================================
-       الكود الأساسي للتطبيق
-       ================================================================ */
+    // ==========================================
+    // كود الواجهة الأساسي
+    // ==========================================
     const VIDEO_CONFIG = [
       { video: "15079798_1080_1920_30fps.mp4", fallback: "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4", poster: "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=900&q=80&auto=format&fit=crop" },
       { video: "videos/upper-hypertrophy.mp4", fallback: "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4", poster: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=900&q=80&auto=format&fit=crop" },
@@ -263,6 +267,24 @@
     }
     function pauseAllVideos() { document.querySelectorAll("video").forEach(v => { try { v.pause(); } catch (e) {} }); }
 
+    window.onUserLoggedIn = function(name, userIsPro, plan) {
+      currentUser = { name: name, provider: "Firebase" };
+      isPro = userIsPro;
+      activePlanTitle = plan || "Free Tier";
+      document.getElementById("top-nav").style.display = "block";
+      updateNavbarStatus();
+      switchPage("dashboard");
+    };
+
+    window.onUserLoggedOut = function() {
+      currentUser = null;
+      isPro = false;
+      activePlanTitle = "Free Tier";
+      renderLoginView();
+    };
+
+    function logout() { window.handleFirebaseLogout(); }
+
     renderLoginView();
     function renderLoginView() {
       pauseAllVideos();
@@ -277,28 +299,17 @@
           <div class="login-form-side">
             <div class="login-box">
               <h2 style="font-size:24px; margin-bottom:6px;">Sign In to FastFit</h2>
-              <p style="color:var(--text-muted); font-size:13px; margin-bottom:22px;">Choose your preferred login method to access your dashboard</p>
+              <p style="color:var(--text-muted); font-size:13px; margin-bottom:22px;">Enter any email & password. If you don't have an account, it will be created automatically.</p>
               <input type="email" id="login-email" class="input-field" placeholder="Email address" />
               <input type="password" class="input-field" placeholder="Password" />
-              <button class="btn-accent" onclick="handleLogin('Athlete', 'Email')">Sign In with Email</button>
-              <div class="divider">OR CONTINUE WITH</div>
-              <button class="social-btn btn-google" onclick="handleLogin('Google Athlete', 'Google')"><span style="font-weight:900; color:#ea4335; font-size:16px;">G</span><span>Continue with Google</span></button>
-              <button class="social-btn btn-facebook" onclick="handleLogin('Facebook Athlete', 'Facebook')"><span style="font-weight:900; font-size:16px;">f</span><span>Continue with Facebook</span></button>
+              <button class="btn-accent" onclick="window.handleFirebaseLogin()">Sign In / Create Account</button>
             </div>
           </div>
         </div>`;
     }
 
-    function handleLogin(defaultName, provider) {
-      const emailVal = document.getElementById("login-email")?.value?.trim();
-      currentUser = { name: emailVal ? emailVal.split("@")[0] : defaultName, provider };
-      document.getElementById("top-nav").style.display = "block";
-      updateNavbarStatus(); switchPage("dashboard");
-    }
-    function logout() { currentUser = null; renderLoginView(); }
-
     function updateNavbarStatus() {
-      document.getElementById("user-display").innerHTML = `Signed in as <b>${currentUser.name}</b> (${currentUser.provider})`;
+      document.getElementById("user-display").innerHTML = `Signed in as <b>${currentUser.name}</b>`;
       const badge = document.getElementById("nav-plan-badge");
       if (isPro) { badge.className = "plan-badge pro"; badge.innerText = `💎 ${activePlanTitle.toUpperCase()}`; }
       else { badge.className = "plan-badge free"; badge.innerText = "🔒 FREE PLAN"; }
