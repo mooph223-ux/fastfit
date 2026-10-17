@@ -5,19 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>FASTFIT — Official Training & Fitness Platform</title>
   <style>
-    :root {
-      color-scheme: dark;
-      --bg-black: #0a0505;
-      --bg-deep: #140708;
-      --surface-dark: #1c0a0b;
-      --surface-card: #261012;
-      --accent: #dc2626;
-      --accent-bright: #ff5757;
-      --text-main: #fff1f2;
-      --text-muted: #fecdd3;
-      --danger: #ef4444;
-      --success: #facc15;
-    }
+    :root { color-scheme: dark; --bg-black: #0a0505; --bg-deep: #140708; --surface-dark: #1c0a0b; --surface-card: #261012; --accent: #dc2626; --accent-bright: #ff5757; --text-main: #fff1f2; --text-muted: #fecdd3; --danger: #ef4444; --success: #facc15; }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
     body { background-color: var(--bg-black); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; }
     
@@ -119,7 +107,6 @@
 </head>
 <body>
 
-  <!-- NAVBAR (Hidden by default) -->
   <header class="navbar" id="top-nav">
     <div class="nav-container">
       <div class="brand-logo" onclick="window.switchPage('dashboard')"><span class="bolt-icon">⚡</span><span>FASTFIT</span></div>
@@ -137,14 +124,12 @@
     </div>
   </header>
 
-  <!-- MAIN CONTENT AREA -->
   <main id="main-content">
     <div style="display:flex; justify-content:center; align-items:center; height:100vh; color:var(--accent-bright); font-weight:800; font-size:20px;">
       Loading FastFit...
     </div>
   </main>
 
-  <!-- ACTIVATION MODAL -->
   <div class="modal-overlay" id="code-modal">
     <div class="modal-box">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
@@ -158,15 +143,11 @@
     </div>
   </div>
 
-  <!-- ============================================================== -->
-  <!-- JAVASCRIPT LOGIC (FIREBASE & UI) -->
-  <!-- ============================================================== -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getFirestore, doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    // 1. Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyDTpUBumnDnojSXAHge870ExPdFb9Vt0AE",
       authDomain: "website-c6428.firebaseapp.com",
@@ -176,13 +157,11 @@
       appId: "1:505882104999:web:f9b5fecb24416e9d4d3782"
     };
 
-    // 2. Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
     const googleProvider = new GoogleAuthProvider();
 
-    // 3. App State Variables
     let currentUser = null;
     let isPro = false;
     let activePlanTitle = "Free Tier";
@@ -190,7 +169,6 @@
     let restInterval = null;
     let restTimeRemaining = 0;
 
-    // 4. Data (Videos & Workouts)
     const VIDEO_CONFIG = [
       { video: "15079798_1080_1920_30fps.mp4", fallback: "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4", poster: "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=900&q=80&auto=format&fit=crop" },
       { video: "videos/upper-hypertrophy.mp4", fallback: "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4", poster: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=900&q=80&auto=format&fit=crop" },
@@ -211,7 +189,6 @@
 
     const workouts = workoutsBase.map((w, i) => ({ ...w, video: VIDEO_CONFIG[i]?.video || "", videoFallback: VIDEO_CONFIG[i]?.fallback || "", image: VIDEO_CONFIG[i]?.poster || "" }));
 
-    // 5. Utility Functions
     function pauseAllVideos() { document.querySelectorAll("video").forEach(v => { try { v.pause(); } catch (e) {} }); }
     
     function attachVideoHandlers() {
@@ -221,7 +198,6 @@
       });
     }
 
-    // 6. UI Rendering Functions
     window.renderLoginView = function() {
       pauseAllVideos();
       document.getElementById("top-nav").style.display = "none";
@@ -263,7 +239,7 @@
 
     window.switchPage = function(page) {
       pauseAllVideos();
-      ["dashboard", "workouts", "pricing"].forEach(id => { document.getElementById("link-" + id)?.classList.toggle("active", id === page); });
+      ["dashboard", "workouts", "pricing"].forEach(id => { document.getElementById(id + "-link")?.classList.remove("active"); document.getElementById("link-" + id)?.classList.toggle("active", id === page); });
       if (page === "dashboard") renderDashboardPage(); 
       else if (page === "workouts") renderWorkoutsPage(); 
       else if (page === "pricing") renderPricingPage();
@@ -381,13 +357,11 @@
         </div>`;
     }
 
-    // 7. Modals & Auth UI Logic
     window.openCodeModal = function() { document.getElementById("modal-code-msg").innerText = ""; document.getElementById("code-modal").style.display = "flex"; }
     window.closeCodeModal = function() { document.getElementById("code-modal").style.display = "none"; }
     window.fillCode = function(code) { document.getElementById("modal-code-input").value = code; }
     window.fillAndOpen = function(code) { window.openCodeModal(); window.fillCode(code); }
 
-    // 8. Firebase Authentication Logic
     window.handleFirebaseLogin = async function() {
       const email = document.getElementById("login-email").value.trim();
       const password = document.getElementById("login-password").value;
@@ -436,7 +410,6 @@
       await signOut(auth);
     };
 
-    // 9. Activation Code Logic
     window.activateCode = async function(inputId, msgId) {
       const code = document.getElementById(inputId).value.trim().toUpperCase();
       const msgEl = document.getElementById(msgId);
@@ -454,9 +427,7 @@
           if (data.is_used === true) {
             msgEl.style.color = "var(--danger)"; msgEl.innerText = "❌ This code has already been used.";
           } else {
-            // Mark code as used
             await updateDoc(codeRef, { is_used: true, used_by: auth.currentUser.email });
-            // Upgrade user
             const userRef = doc(db, "users", auth.currentUser.uid);
             await updateDoc(userRef, { isPro: true, plan: data.plan });
 
@@ -473,27 +444,34 @@
           msgEl.style.color = "var(--danger)"; msgEl.innerText = "❌ Invalid code.";
         }
       } catch (error) {
-        msgEl.style.color = "var(--danger)"; msgEl.innerText = "❌ Error connecting to database.";
+        console.error("Firestore Error:", error);
+        msgEl.style.color = "var(--danger)"; msgEl.innerText = "❌ Database Error! Check Firestore.";
       } finally {
         btn.innerText = "Unlock Pro Membership"; btn.disabled = false;
       }
     };
 
-    // 10. Auth State Listener (Auto Login/Logout)
     onAuthStateChanged(auth, async (user) => {
       if (user) {
-        const userRef = doc(db, "users", user.uid);
-        const userSnap = await getDoc(userRef);
-        
-        if (userSnap.exists()) {
-          const data = userSnap.data();
-          isPro = data.isPro || false;
-          activePlanTitle = data.plan || "Free Tier";
-        } else {
-          // Create document for new user
-          await setDoc(userRef, { email: user.email, isPro: false, plan: "Free Tier" });
+        try {
+          // حاول تجيب بيانات المستخدم من الداتا بيز
+          const userRef = doc(db, "users", user.uid);
+          const userSnap = await getDoc(userRef);
+          
+          if (userSnap.exists()) {
+            const data = userSnap.data();
+            isPro = data.isPro || false;
+            activePlanTitle = data.plan || "Free Tier";
+          } else {
+            await setDoc(userRef, { email: user.email, isPro: false, plan: "Free Tier" });
+            isPro = false;
+            activePlanTitle = "Free Tier";
+          }
+        } catch (e) {
+          console.error("Database Error (Firestore may be disabled):", e);
+          // لو الداتا بيز فيها مشكلة، منعطلش الموقع، خليه يفتح كـ Free User
           isPro = false;
-          activePlanTitle = "Free Tier";
+          activePlanTitle = "Free Tier (DB Error)";
         }
         
         currentUser = { name: user.email.split("@")[0], provider: "Firebase" };
